@@ -1,5 +1,5 @@
 {
-  "name": "odata-v5-querybuilder",
+  "name": "dc-fluent-odata",
   "version": "1.0.0",
   "description": "Builds a url for odata v5",
   "main": "index.js",
