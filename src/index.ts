@@ -26,6 +26,7 @@ export class QueryBuilder {
     skip: "",
     count: "",
   };
+
   orderBy = (fields: string) => {
     this.operations["orderBy"] = `$orderby=${fields}`;
     return this;
@@ -46,40 +47,31 @@ export class QueryBuilder {
     this.operations["filter"] = `$filter=${fn(new FilterBuilder()).build()}`;
     return this;
   };
-  private _expand = (fieldsAndSelects: ExpandProps[]) => {
-    if (fieldsAndSelects) {
-      const smt = fieldsAndSelects
-        .map(
-          (x) =>
-            x.field +
-            `(${x.select ? `$select=${x.select}` : ""}${
-              x.expand ? `&$expand=${this._expand(x.expand)}` : ""
-            }${
-              x.filter
-                ? `&$filter=${x.filter(new FilterBuilder()).build()}`
-                : ""
-            })`
-        )
-        .join(",");
-      return smt;
+
+  expand = (field: string, fn: (bldr: QueryBuilder) => QueryBuilder) => {
+    if (this.operations["expand"]) {
+      this.operations["expand"] += `,${field}${
+        fn ? `(${fn(new QueryBuilder())._build()})` : ""
+      }`;
+    } else {
+      this.operations["expand"] = `$expand=${field}${
+        fn ? `(${fn(new QueryBuilder())._build()})` : ""
+      }`;
     }
-    return "";
-  };
-  expand = (props: ExpandProps[]) => {
-    const smt = this._expand(props);
-    this.operations["expand"] = `$expand=${smt}`;
+
     return this;
   };
   select = (fields: string) => {
     this.operations["select"] = `$select=${fields}`;
     return this;
   };
-
   build = () => {
+    return "?" + this._build();
+  };
+
+  private _build = () => {
     const operations = Object.entries(this.operations).filter((x) => x[1]);
 
-    let query = "?" + operations.map((sf) => sf[1]).join("&");
-
-    return query;
+    return operations.map((sf) => sf[1]).join("&");
   };
 }
